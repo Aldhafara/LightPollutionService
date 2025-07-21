@@ -249,9 +249,9 @@ License: Creative Commons Attribution 4.0 (CC-BY 4.0)
 ## TODO / Roadmap
 
 - [ ] /darkness?lat=...&lon=... endpoint
-- [ ] GeoTIFF value lookup
-- [ ] Result caching
-- [ ] Input parameter validation
+- [X] GeoTIFF value lookup
+- [X] Result caching
+- [X] Input parameter validation
 - [X] Global error handler
 - [ ] API documentation (Swagger/OpenAPI)
 - [ ] Integration tests (MockMvc)
