@@ -12,6 +12,7 @@ astrophotographers to find the best stargazing spots.
 ## Table of Contents
 
 - [Features](#features)
+- [Configuration](#configuration)
 - [How to Run](#how-to-run)
 - [How to Run with Docker](#how-to-run-with-docker)
 - [API Documentation (Swagger/OpenAPI)](#api-documentation-swaggeropenapi)
@@ -23,6 +24,7 @@ astrophotographers to find the best stargazing spots.
 - [Error Handling](#error-handling)
 - [Example Usage](#example-usage)
 - [How to Test](#how-to-test)
+- [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Data Source](#data-source)
 - [TODO / Roadmap](#todo--roadmap)
@@ -33,6 +35,17 @@ Currently under development. Available now:
 
 - /status health-check endpoint (server status, uptime, timestamp)
 
+## Configuration
+
+Before running the application, you need an `application.properties` file with your local configuration (paths, API keys, etc.).
+
+1. Copy the example to create your own config:
+```bash
+   cp src/main/resources/example-application.properties src/main/resources/application.properties
+```
+
+2. Edit `src/main/resources/application.properties` and fill in the required values for your environment.
+
 ## How to Run
 
 1. Clone the repository:
@@ -41,13 +54,19 @@ Currently under development. Available now:
 git clone https://github.com/Aldhafara/LightPollutionService.git
 ```
 
-2. Start the application:
+2. Prepare your configuration:
+```bash
+   cp src/main/resources/example-application.properties src/main/resources/application.properties
+```
+(then edit as needed)
+
+3. Start the application:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-3. By default, the application will be available at:
+4. By default, the application will be available at:
 
 ```
 http://localhost:8080
@@ -61,19 +80,21 @@ http://localhost:8080
 ./mvnw clean package
 ```
 
-2. Build the image:
+2. (Optional) Prepare your application.properties if you want to override the config.
+
+3. Build the image:
 
 ```bash
 docker build -t lightpollutionservice .
 ```
 
-3. Run:
+4. Run (with local `application.properties` mounted):
 
 ```bash
-docker run -p 8080:8080 lightpollutionservice
+docker run -p 8080:8080 -v $(pwd)/src/main/resources/application.properties:/app/application.properties lightpollutionservice
 ```
 
-4. (or, with Docker Compose)
+5. (or, with Docker Compose)
 
 ```bash
 docker compose up --build
@@ -201,6 +222,14 @@ Run tests:
 ```bash
 ./mvnw test
 ```
+
+## Troubleshooting
+
+- If you see errors about missing configuration, make sure `src/main/resources/application.properties` exists and is correctly filled.
+- For Docker users, you can mount your configuration file as a volume if not building it into the image directly.
+- Example Error:  
+  `Could not resolve placeholder...`  
+  Make sure your application.properties contains all needed variables.
 
 ## License
 
