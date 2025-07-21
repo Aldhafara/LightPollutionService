@@ -1,0 +1,56 @@
+package com.aldhafara.lightPollutionService.service;
+
+import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.awt.image.BufferedImage;
+
+@Service
+public class ViirsTiffService {
+
+    private static final Logger log = LoggerFactory.getLogger(ViirsTiffService.class);
+
+    private final RasterImageProvider imageProvider;
+    private final GeoReferenceProvider referenceProvider;
+
+    public ViirsTiffService(RasterImageProvider imageProvider, GeoReferenceProvider referenceProvider) {
+        this.imageProvider = imageProvider;
+        this.referenceProvider = referenceProvider;
+    }
+
+    public Double getValueForLocation(double lat, double lon, BufferedImage tiffFile, ViirsGeoReference geoReference) throws IllegalArgumentException {
+        int x = (int) ((lon - geoReference.originX()) / geoReference.pixelScaleX());
+        int y = (int) ((geoReference.originY() - lat) / geoReference.pixelScaleY());
+
+        if (x < 0 || x >= geoReference.width() || y < 0 || y >= geoReference.height()) {
+            log.warn("Coordinates lat:'{}', lon:'{}' outside the TIFF raster range", lat, lon);
+            throw new IllegalArgumentException(
+                    String.format("Coordinates lat:%.8f, lon:%.8f are outside the TIFF raster range", lat, lon)
+            );
+        }
+
+        int pixel = tiffFile.getRGB(x, y);
+
+        double alpha = (pixel >> 24) & 0xff;
+        double red = (pixel >> 16) & 0xff;
+        double green = (pixel >> 8) & 0xff;
+        double blue = (pixel) & 0xff;
+
+        return red;
+    }
+
+    public Double getValueForLocation(double lat, double lon) {
+        try {
+            return getValueForLocation(lat, lon, imageProvider.getImage("2023/average"), referenceProvider.getReference("2023/average"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void getOrLoadReference(String key) {
+        imageProvider.getOrLoadReference(key);
+        referenceProvider.getOrLoadReference(key);
+    }
+}
