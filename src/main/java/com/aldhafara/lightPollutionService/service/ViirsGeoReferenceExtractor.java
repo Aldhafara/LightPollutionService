@@ -1,6 +1,8 @@
 package com.aldhafara.lightPollutionService.service;
 
 import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
+import com.aldhafara.lightPollutionService.utils.FileStreamProvider;
+import com.aldhafara.lightPollutionService.utils.TiffFileStreamProvider;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
@@ -11,12 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,11 +30,13 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
 
     private final String viirsAverageDataPath;
     private final String viirsMaskDataPath;
+    private final FileStreamProvider fileStreamProvider;
 
     public ViirsGeoReferenceExtractor(@Value("${viirs.average.url}") String viirsAverageDataPath,
-                                      @Value("${viirs.mask.url}") String viirsMaskDataPath) {
+                                      @Value("${viirs.mask.url}") String viirsMaskDataPath, FileStreamProvider fileStreamProvider) {
         this.viirsAverageDataPath = viirsAverageDataPath;
         this.viirsMaskDataPath = viirsMaskDataPath;
+        this.fileStreamProvider = fileStreamProvider;
     }
 
     @Override
@@ -45,9 +45,9 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
             try {
                 InputStream inputStream;
                 if (key.contains("average")) {
-                    inputStream = getFileInputStream(viirsAverageDataPath);
+                    inputStream = fileStreamProvider.getFileInputStream(viirsAverageDataPath);
                 } else if (key.contains("mask")) {
-                    inputStream = getFileInputStream(viirsMaskDataPath);
+                    inputStream = fileStreamProvider.getFileInputStream(viirsMaskDataPath);
                 } else {
                     log.error("Error while reading TIFF file, unknown key='{}'", key);
                     return null;
@@ -137,13 +137,5 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
         }
 
         return new ViirsGeoReference(originX, originY, pixelScaleX, pixelScaleY, width, height);
-    }
-
-    InputStream getFileInputStream(String tiffUrl) throws IOException {
-        if (tiffUrl.startsWith("file://")) {
-            return new FileInputStream(new File(URI.create(tiffUrl)));
-        } else {
-            return new URL(tiffUrl).openStream();
-        }
     }
 }

@@ -1,11 +1,13 @@
 package com.aldhafara.lightPollutionService.service;
 
+import com.aldhafara.lightPollutionService.utils.FileStreamProvider;
 import org.apache.commons.imaging.Imaging;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -13,13 +15,16 @@ import java.net.URL;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 class ViirsTiffFileLoaderTest {
 
+    FileStreamProvider fileStreamProvider = mock(FileStreamProvider.class);
     private ViirsTiffFileLoader loader;
 
     @BeforeEach
@@ -29,7 +34,8 @@ class ViirsTiffFileLoaderTest {
 
         loader = new ViirsTiffFileLoader(
                 averageResourceUrl.toURI().toString(),
-                maskResourceUrl.toURI().toString()
+                maskResourceUrl.toURI().toString(),
+                fileStreamProvider
         );
     }
 
@@ -38,6 +44,8 @@ class ViirsTiffFileLoaderTest {
         try (MockedStatic<Imaging> imaging = mockStatic(Imaging.class)) {
             BufferedImage mockedImage = mock(BufferedImage.class);
             imaging.when(() -> Imaging.getBufferedImage(any(InputStream.class))).thenReturn(mockedImage);
+
+            when(fileStreamProvider.getFileInputStream(anyString())).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
 
             loader.getOrLoadReference("2023/average");
             BufferedImage result = loader.getImage("2023/average");
@@ -52,6 +60,8 @@ class ViirsTiffFileLoaderTest {
         try (MockedStatic<Imaging> imaging = mockStatic(Imaging.class)) {
             BufferedImage mockedImage = mock(BufferedImage.class);
             imaging.when(() -> Imaging.getBufferedImage(any(InputStream.class))).thenReturn(mockedImage);
+
+            when(fileStreamProvider.getFileInputStream(anyString())).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
 
             loader.getOrLoadReference("2023/mask");
             BufferedImage result = loader.getImage("2023/mask");
@@ -70,7 +80,7 @@ class ViirsTiffFileLoaderTest {
     @Test
     void testGetOrLoadReference_HandlesIOException() {
         ViirsTiffFileLoader failingLoader = new ViirsTiffFileLoader(
-                "file:///nonexistent/average.tiff", "file:///nonexistent/mask.tiff"
+                "file:///nonexistent/average.tiff", "file:///nonexistent/mask.tiff", fileStreamProvider
         );
         assertThrows(RuntimeException.class, () -> {
             failingLoader.getOrLoadReference("2023/average");

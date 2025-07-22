@@ -27,13 +27,13 @@ astrophotographers to find the best stargazing spots.
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Data Source](#data-source)
-- [TODO / Roadmap](#todo--roadmap)
 
 ## Features
 
-Currently under development. Available now:
+Available:
 
 - /status health-check endpoint (server status, uptime, timestamp)
+- /darkness sky brightness rating for given coordinates
 
 ## Configuration
 
@@ -115,31 +115,25 @@ http://localhost:8080/swagger-ui.html
 ```
 
 You can explore, test, and understand all endpoints directly from your browser.
-_Planned: As new endpoints are implemented, they will be automatically documented here._
 
 ## API Endpoints
 
-| Endpoint  | Type | Description                                 | Status |
-|-----------|------|---------------------------------------------|--------|
-| /status   | GET  | Server status, uptime, timestamp            | ✅      |
-| /darkness | GET  | Sky brightness rating for given coordinates | ❌      |
+| Endpoint  | Type | Description                                 |
+|-----------|------|---------------------------------------------|
+| /status   | GET  | Server status, uptime, timestamp            |
+| /darkness | GET  | Sky brightness rating for given coordinates |
 
 ## API Request Parameters
 
-Planned features. Not yet implemented
-
-| Parameter | Type  | Description        | Default            |
-|-----------|-------|--------------------|--------------------|
-| latitude  | float | Location latitude  | 52.232222 (Warsaw) |
-| longitude | float | Location longitude | 21.008333 (Warsaw) |
-
-- **All parameters are optional.** If not provided, Warsaw is used.
+| Parameter | Type  | Description        |
+|-----------|-------|--------------------|
+| latitude  | float | Location latitude  |
+| longitude | float | Location longitude |
 
 **Example requests:**
 
 ```
 GET /status
-GET /darkness
 GET /darkness?latitude=50.06143&longitude=19.93658
 ```
 
@@ -165,22 +159,18 @@ GET /darkness?latitude=50.06143&longitude=19.93658
 
 ### Example `/darkness` Response
 
-Planned features. Not yet implemented.
-
 ```json
 {
   "latitude": 52.232222,
   "longitude": 21.008333,
-  "radiance": 0.12,
-  "darknessScore": "dark"
+  "relativeBrightness": 0.12
 }
 ```
 
 **Description of key fields:**
 
 - `latitude`, `longitude` - query coordinates
-- `radiance` - light intensity (lower = darker)
-- `darknessScore` - sky darkness rating (e.g., "dark", "average", "bright")
+- `relativeBrightness` - light intensity (lower = darker)
 
 ## Caching
 
@@ -208,8 +198,6 @@ Planned features. Not yet implemented.
 ```
 
 ## Example Usage
-
-Planned features. Not yet implemented.
 
 ```bash
 curl "http://localhost:8080/darkness?latitude=50.06143&longitude=19.93658"
@@ -245,14 +233,3 @@ Public Policy, Colorado School of Mines.
 [EOG VIIRS Nighttime Lights - annual composites](https://eogdata.mines.edu/products/vnl/#annual_v2)
 
 License: Creative Commons Attribution 4.0 (CC-BY 4.0)
-
-## TODO / Roadmap
-
-- [ ] /darkness?lat=...&lon=... endpoint
-- [X] GeoTIFF value lookup
-- [X] Result caching
-- [X] Input parameter validation
-- [X] Global error handler
-- [ ] API documentation (Swagger/OpenAPI)
-- [ ] Integration tests (MockMvc)
-- [X] Example deployment (Docker/Kubernetes)

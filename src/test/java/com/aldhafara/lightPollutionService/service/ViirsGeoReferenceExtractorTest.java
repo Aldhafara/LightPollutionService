@@ -1,6 +1,7 @@
 package com.aldhafara.lightPollutionService.service;
 
 import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
+import com.aldhafara.lightPollutionService.utils.FileStreamProvider;
 import org.apache.commons.imaging.ImagingException;
 import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
@@ -22,12 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ViirsGeoReferenceExtractorTest {
 
+    FileStreamProvider fileStreamProvider = mock(FileStreamProvider.class);
     private ViirsGeoReferenceExtractor extractor;
 
     @BeforeEach
@@ -37,7 +38,8 @@ class ViirsGeoReferenceExtractorTest {
 
         extractor = new ViirsGeoReferenceExtractor(
                 averageResourceUrl.toURI().toString(),
-                maskResourceUrl.toURI().toString()
+                maskResourceUrl.toURI().toString(),
+                fileStreamProvider
         );
     }
 
@@ -49,9 +51,10 @@ class ViirsGeoReferenceExtractorTest {
         try (MockedStatic<org.apache.commons.imaging.Imaging> imagingStatic = Mockito.mockStatic(org.apache.commons.imaging.Imaging.class)) {
             imagingStatic.when(() -> org.apache.commons.imaging.Imaging.getMetadata(any(byte[].class))).thenReturn(fakeMetadata);
 
+            when(fileStreamProvider.getFileInputStream(anyString())).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
+
             ViirsGeoReferenceExtractor spyExtractor = Mockito.spy(extractor);
             doReturn(fakeReference).when(spyExtractor).extractGeoReference(fakeMetadata);
-            doReturn(new ByteArrayInputStream(new byte[]{1, 2, 3})).when(spyExtractor).getFileInputStream(anyString());
 
             spyExtractor.getOrLoadReference("2023/average");
             ViirsGeoReference cachedReference = spyExtractor.getReference("2023/average");
@@ -70,11 +73,12 @@ class ViirsGeoReferenceExtractorTest {
 
     @Test
     void testGetOrLoadReferenceThrowsRuntimeExceptionOnIOException() throws Exception {
-        ViirsGeoReferenceExtractor spyExtractor = Mockito.spy(extractor);
-        doThrow(new java.io.IOException("File error")).when(spyExtractor).getFileInputStream(anyString());
+        when(fileStreamProvider.getFileInputStream(anyString())).thenThrow(new IOException("File error"));
 
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            spyExtractor.getOrLoadReference("2023/average");
+        ViirsGeoReferenceExtractor extractorWithMock = Mockito.spy(extractor);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            extractorWithMock.getOrLoadReference("2023/average");
         });
         assertInstanceOf(IOException.class, exception.getCause());
     }

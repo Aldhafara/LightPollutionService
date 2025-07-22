@@ -2,6 +2,7 @@ package com.aldhafara.lightPollutionService.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
@@ -28,6 +29,16 @@ public class GlobalExceptionHandler {
                 "status", 500,
                 "error", "Internal Server Error",
                 "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingParams(MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", 400,
+                "error", "Bad Request",
+                "message", "Missing required request parameter: " + ex.getParameterName()
         ));
     }
 }

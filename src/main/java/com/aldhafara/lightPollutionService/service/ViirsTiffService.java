@@ -1,6 +1,7 @@
 package com.aldhafara.lightPollutionService.service;
 
 import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,11 @@ public class ViirsTiffService {
     public ViirsTiffService(RasterImageProvider imageProvider, GeoReferenceProvider referenceProvider) {
         this.imageProvider = imageProvider;
         this.referenceProvider = referenceProvider;
+    }
+
+    @PostConstruct
+    public void init() {
+        getOrLoadReference("2023/average");
     }
 
     public Double getValueForLocation(double lat, double lon, BufferedImage tiffFile, ViirsGeoReference geoReference) throws IllegalArgumentException {
