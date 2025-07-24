@@ -179,8 +179,14 @@ GET /darkness?latitude=50.06143&longitude=19.93658
 
 ## Rate Limiting
 
-- Planned: endpoint protection (e.g., /darkness)—limit 20 requests/min/IP.
-- Exceeding the limit: HTTP 429.
+This is a protection for the `/darkness` endpoint against excessive requests - the limit is set to 50 requests per minute per IP.
+
+- Limit: 50 requests per minute per IP address (configurable in application.properties under the keys `ratelimit.requests` and `ratelimit.durationSeconds`).
+- Restricted endpoint: `/darkness` (requires the @RateLimited annotation)
+- Exceeding the limit: returns HTTP status 429 (Too Many Requests) along with a JSON error message.
+- Mechanism: based on Spring AOP, the RateLimitAspect class controls the number of requests.
+- Testing: integration tests verify that the endpoint properly returns 429 when the limit is exceeded.
+If needed, the limit can be adjusted or extended to other endpoints by adding the @RateLimited annotation and configuring accordingly.
 
 ## Error Handling
 

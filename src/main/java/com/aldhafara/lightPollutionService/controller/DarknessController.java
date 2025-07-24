@@ -1,6 +1,7 @@
 package com.aldhafara.lightPollutionService.controller;
 
 import com.aldhafara.lightPollutionService.model.DarknessResponse;
+import com.aldhafara.lightPollutionService.ratelimit.RateLimited;
 import com.aldhafara.lightPollutionService.service.ViirsTiffService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -60,6 +61,7 @@ public class DarknessController {
                     )
             }
     )
+    @RateLimited()
     @GetMapping
     public ResponseEntity<DarknessResponse> getDarkness(
             @RequestParam double latitude,

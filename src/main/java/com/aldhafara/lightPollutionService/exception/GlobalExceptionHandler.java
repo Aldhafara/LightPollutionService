@@ -41,4 +41,14 @@ public class GlobalExceptionHandler {
                 "message", "Missing required request parameter: " + ex.getParameterName()
         ));
     }
+
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimit(RateLimitException ex) {
+        return ResponseEntity.status(429).body(Map.of(
+                "timestamp", Instant.now().toString(),
+                "status", 429,
+                "error", "Too Many Requests",
+                "message", ex.getMessage()
+        ));
+    }
 }
