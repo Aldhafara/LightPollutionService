@@ -1,8 +1,12 @@
 package com.aldhafara.lightPollutionService.service;
 
+import com.aldhafara.lightPollutionService.exception.InvalidTiffFieldException;
+import com.aldhafara.lightPollutionService.exception.MissingTiffFieldException;
+import com.aldhafara.lightPollutionService.exception.ResourceNotFoundException;
+import com.aldhafara.lightPollutionService.exception.TiffFileReadException;
+import com.aldhafara.lightPollutionService.exception.TiffMetadataExtractionException;
 import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
 import com.aldhafara.lightPollutionService.utils.FileStreamProvider;
-import com.aldhafara.lightPollutionService.utils.TiffFileStreamProvider;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.formats.tiff.TiffField;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
@@ -40,26 +44,35 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
     }
 
     @Override
-    public void getOrLoadReference(String key) {
-        geoRefCache.computeIfAbsent(key, k -> {
-            try {
-                InputStream inputStream;
-                if (key.contains("average")) {
-                    inputStream = fileStreamProvider.getFileInputStream(viirsAverageDataPath);
-                } else if (key.contains("mask")) {
-                    inputStream = fileStreamProvider.getFileInputStream(viirsMaskDataPath);
-                } else {
-                    log.error("Error while reading TIFF file, unknown key='{}'", key);
-                    return null;
-                }
-                TiffImageMetadata metadata = getTiffMetadata(inputStream);
-                return extractGeoReference(metadata);
+    public void getOrLoadReference(String key) throws TiffFileReadException {
+        try {
+            geoRefCache.computeIfAbsent(key, k -> {
+                try {
+                    InputStream inputStream;
+                    if (k.contains("average")) {
+                        inputStream = fileStreamProvider.getFileInputStream(viirsAverageDataPath);
+                    } else if (k.contains("mask")) {
+                        inputStream = fileStreamProvider.getFileInputStream(viirsMaskDataPath);
+                    } else {
+                        log.error("Error while reading TIFF file, unknown key='{}'", k);
+                        return null;
+                    }
+                    TiffImageMetadata metadata = getTiffMetadata(inputStream);
+                    return extractGeoReference(metadata);
 
-            } catch (IOException e) {
-                log.error("Error while reading TIFF file", e);
-                throw new RuntimeException(e);
+                } catch (ResourceNotFoundException e) {
+                    log.error("Error while reading TIFF file", e);
+                    throw new TiffFileReadException("Failed to read TIFF file", e);
+                }
+            });
+        } catch (RuntimeException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof ResourceNotFoundException || cause instanceof TiffFileReadException) {
+                throw new TiffFileReadException("Failed to read TIFF file", cause);
+            } else {
+                throw e;
             }
-        });
+        }
     }
 
     @Override
@@ -67,19 +80,24 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
         return geoRefCache.get(key);
     }
 
-    private TiffImageMetadata getTiffMetadata(InputStream is) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        byte[] temp = new byte[8192];
-        int n;
-        while ((n = is.read(temp)) != -1) {
-            buffer.write(temp, 0, n);
-        }
-        byte[] tiffData = buffer.toByteArray();
+    private TiffImageMetadata getTiffMetadata(InputStream is) throws TiffFileReadException {
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] temp = new byte[8192];
+            int n;
+            while ((n = is.read(temp)) != -1) {
+                buffer.write(temp, 0, n);
+            }
+            byte[] tiffData = buffer.toByteArray();
 
-        return (TiffImageMetadata) Imaging.getMetadata(tiffData);
+            return (TiffImageMetadata) Imaging.getMetadata(tiffData);
+        } catch (IOException e) {
+            log.error("Error while reading TIFF metadata", e);
+            throw new TiffFileReadException("Failed to read TIFF metadata from input stream", e);
+        }
     }
 
-    public ViirsGeoReference extractGeoReference(TiffImageMetadata metadata) {
+    public ViirsGeoReference extractGeoReference(TiffImageMetadata metadata) throws TiffMetadataExtractionException {
         double originX = 0.0;
         double originY = 0.0;
         double pixelScaleX = 0.0;
@@ -98,7 +116,7 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
             }
         } catch (Exception e) {
             log.error("Error while reading TIFF file metadata", e);
-            throw new IllegalArgumentException("Error reading ImageWidth/ImageLength", e);
+            throw new TiffMetadataExtractionException("Error reading ImageWidth/ImageLength", e);
         }
 
         try {
@@ -109,11 +127,11 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
                 pixelScaleY = scales[1];
             } else {
                 log.error("Error while reading TIFF file metadata. Missing ModelPixelScaleTag (33550)");
-                throw new IllegalArgumentException("Missing ModelPixelScaleTag (33550)");
+                throw new MissingTiffFieldException("ModelPixelScaleTag (33550)");
             }
         } catch (Exception e) {
             log.error("Error while reading TIFF file metadata", e);
-            throw new IllegalArgumentException("Error reading ModelPixelScaleTag", e);
+            throw new TiffMetadataExtractionException("Error reading ModelPixelScaleTag", e);
         }
 
         try {
@@ -125,15 +143,17 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
                     originY = tiepoints[4];
                 } else {
                     log.error("Error while reading TIFF file metadata. Incorrect ModelTiepointTag length");
-                    throw new IllegalArgumentException("Incorrect ModelTiepointTag length");
+                    throw new InvalidTiffFieldException("ModelTiepointTag", "Incorrect length");
+
                 }
             } else {
                 log.error("Error while reading TIFF file metadata. Missing ModelTiepointTag (33922)");
-                throw new IllegalArgumentException("Missing ModelTiepointTag (33922)");
+                throw new MissingTiffFieldException("ModelTiepointTag (33922)");
+
             }
         } catch (Exception e) {
             log.error("Error while reading TIFF file metadata", e);
-            throw new IllegalArgumentException("Error reading ModelTiepointTag", e);
+            throw new TiffMetadataExtractionException("Error reading ModelTiepointTag", e);
         }
 
         return new ViirsGeoReference(originX, originY, pixelScaleX, pixelScaleY, width, height);

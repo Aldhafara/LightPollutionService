@@ -8,7 +8,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/darkness")
+@Validated
 public class DarknessController {
 
     private final ViirsTiffService tiffService;
@@ -55,6 +59,11 @@ public class DarknessController {
                             content = @Content
                     ),
                     @ApiResponse(
+                            responseCode = "429",
+                            description = "Too Many Requests",
+                            content = @Content
+                    ),
+                    @ApiResponse(
                             responseCode = "500",
                             description = "Internal server error",
                             content = @Content
@@ -64,8 +73,8 @@ public class DarknessController {
     @RateLimited()
     @GetMapping
     public ResponseEntity<DarknessResponse> getDarkness(
-            @RequestParam double latitude,
-            @RequestParam double longitude
+            @RequestParam @Min(-90) @Max(90) double latitude,
+            @RequestParam @Min(-180) @Max(180) double longitude
     ) {
         Double relBrightness = tiffService.getValueForLocation(latitude, longitude);
         DarknessResponse response = new DarknessResponse(latitude, longitude, relBrightness);

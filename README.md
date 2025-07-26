@@ -202,8 +202,10 @@ Planned features. Not yet implemented.
 
 ```json
 {
-  "error": "Invalid parameter: latitude",
-  "timestamp": "2025-07-14T18:52:00Z"
+  "timestamp": "2025-07-14T18:52:00Z",
+  "status": 400,
+  "error": "Coordinates outside raster bounds",
+  "message": "Coordinates lat:-10,00000000, lon:-10,00000000 are outside the TIFF raster range"
 }
 ```
 

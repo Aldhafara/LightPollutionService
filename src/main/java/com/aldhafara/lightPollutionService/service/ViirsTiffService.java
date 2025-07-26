@@ -1,5 +1,7 @@
 package com.aldhafara.lightPollutionService.service;
 
+import com.aldhafara.lightPollutionService.exception.CoordinatesOutOfRasterBoundsException;
+import com.aldhafara.lightPollutionService.exception.TiffFileReadException;
 import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -26,13 +28,13 @@ public class ViirsTiffService {
         getOrLoadReference("2023/average");
     }
 
-    public Double getValueForLocation(double lat, double lon, BufferedImage tiffFile, ViirsGeoReference geoReference) throws IllegalArgumentException {
+    public Double getValueForLocation(double lat, double lon, BufferedImage tiffFile, ViirsGeoReference geoReference) throws CoordinatesOutOfRasterBoundsException {
         int x = (int) ((lon - geoReference.originX()) / geoReference.pixelScaleX());
         int y = (int) ((geoReference.originY() - lat) / geoReference.pixelScaleY());
 
         if (x < 0 || x >= geoReference.width() || y < 0 || y >= geoReference.height()) {
             log.warn("Coordinates lat:'{}', lon:'{}' outside the TIFF raster range", lat, lon);
-            throw new IllegalArgumentException(
+            throw new CoordinatesOutOfRasterBoundsException(
                     String.format("Coordinates lat:%.8f, lon:%.8f are outside the TIFF raster range", lat, lon)
             );
         }
@@ -47,15 +49,11 @@ public class ViirsTiffService {
         return red;
     }
 
-    public Double getValueForLocation(double lat, double lon) {
-        try {
-            return getValueForLocation(lat, lon, imageProvider.getImage("2023/average"), referenceProvider.getReference("2023/average"));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public Double getValueForLocation(double lat, double lon) throws CoordinatesOutOfRasterBoundsException {
+        return getValueForLocation(lat, lon, imageProvider.getImage("2023/average"), referenceProvider.getReference("2023/average"));
     }
 
-    public void getOrLoadReference(String key) {
+    public void getOrLoadReference(String key) throws TiffFileReadException {
         imageProvider.getOrLoadReference(key);
         referenceProvider.getOrLoadReference(key);
     }

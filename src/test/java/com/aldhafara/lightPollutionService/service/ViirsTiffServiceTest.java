@@ -1,5 +1,6 @@
 package com.aldhafara.lightPollutionService.service;
 
+import com.aldhafara.lightPollutionService.exception.CoordinatesOutOfRasterBoundsException;
 import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,8 +65,8 @@ public class ViirsTiffServiceTest {
         double lat = 7.0;
         double lon = 6.0;
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
+        CoordinatesOutOfRasterBoundsException ex = assertThrows(
+                CoordinatesOutOfRasterBoundsException.class,
                 () -> service.getValueForLocation(lat, lon, image, ref)
         );
         assertTrue(ex.getMessage().contains("outside the TIFF raster range"));

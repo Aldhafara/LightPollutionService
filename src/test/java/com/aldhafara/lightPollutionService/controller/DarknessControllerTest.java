@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @EnableAspectJAutoProxy(proxyTargetClass = true)
@@ -100,5 +101,77 @@ class DarknessControllerTest {
         public RateLimitAspect rateLimitAspect(Environment env) {
             return new RateLimitAspect(env);
         }
+    }
+
+    @Test
+    void shouldReturnBadRequest_whenLatitudeIsTooLow() throws Exception {
+        mockMvc.perform(get("/darkness")
+                        .param("latitude", "-91")
+                        .param("longitude", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Invalid request parameters"))
+                .andExpect(jsonPath("$.message").value("getDarkness.latitude: must be greater than or equal to -90"));
+    }
+
+    @Test
+    void shouldReturnBadRequest_whenLatitudeIsTooHigh() throws Exception {
+        mockMvc.perform(get("/darkness")
+                        .param("latitude", "91")
+                        .param("longitude", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Invalid request parameters"))
+                .andExpect(jsonPath("$.message").value("getDarkness.latitude: must be less than or equal to 90"));
+    }
+
+    @Test
+    void shouldReturnBadRequest_whenLongitudeIsTooLow() throws Exception {
+        mockMvc.perform(get("/darkness")
+                        .param("latitude", "20")
+                        .param("longitude", "-181")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Invalid request parameters"))
+                .andExpect(jsonPath("$.message").value("getDarkness.longitude: must be greater than or equal to -180"));
+    }
+
+    @Test
+    void shouldReturnBadRequest_whenLongitudeIsTooHigh() throws Exception {
+        mockMvc.perform(get("/darkness")
+                        .param("latitude", "20")
+                        .param("longitude", "181")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Invalid request parameters"))
+                .andExpect(jsonPath("$.message").value("getDarkness.longitude: must be less than or equal to 180"));
+    }
+
+    @Test
+    void shouldReturnBadRequest_whenLongitudeIsBadType() throws Exception {
+        mockMvc.perform(get("/darkness")
+                        .param("latitude", "20")
+                        .param("longitude", "cow")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid parameter: longitude"));
+    }
+
+    @Test
+    void shouldReturnBadRequest_whenLatitudeIsBadType() throws Exception {
+        mockMvc.perform(get("/darkness")
+                        .param("latitude", "cow")
+                        .param("longitude", "20")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid parameter: latitude"));
     }
 }

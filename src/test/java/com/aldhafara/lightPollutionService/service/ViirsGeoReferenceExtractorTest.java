@@ -1,5 +1,7 @@
 package com.aldhafara.lightPollutionService.service;
 
+import com.aldhafara.lightPollutionService.exception.ResourceNotFoundException;
+import com.aldhafara.lightPollutionService.exception.TiffFileReadException;
 import com.aldhafara.lightPollutionService.model.ViirsGeoReference;
 import com.aldhafara.lightPollutionService.utils.FileStreamProvider;
 import org.apache.commons.imaging.ImagingException;
@@ -11,7 +13,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -72,15 +73,15 @@ class ViirsGeoReferenceExtractorTest {
     }
 
     @Test
-    void testGetOrLoadReferenceThrowsRuntimeExceptionOnIOException() throws Exception {
-        when(fileStreamProvider.getFileInputStream(anyString())).thenThrow(new IOException("File error"));
+    void testGetOrLoadReferenceThrowsTiffFileReadExceptionOnResourceNotFoundException() {
+        when(fileStreamProvider.getFileInputStream(anyString())).thenThrow(new ResourceNotFoundException("File error"));
 
         ViirsGeoReferenceExtractor extractorWithMock = Mockito.spy(extractor);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            extractorWithMock.getOrLoadReference("2023/average");
-        });
-        assertInstanceOf(IOException.class, exception.getCause());
+        TiffFileReadException exception = assertThrows(TiffFileReadException.class, () ->
+                extractorWithMock.getOrLoadReference("2023/average"));
+
+        assertInstanceOf(ResourceNotFoundException.class, exception.getCause());
     }
 
     @Test

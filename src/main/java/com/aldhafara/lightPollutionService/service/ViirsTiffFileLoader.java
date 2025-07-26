@@ -1,8 +1,11 @@
 package com.aldhafara.lightPollutionService.service;
 
+import com.aldhafara.lightPollutionService.exception.ResourceNotFoundException;
+import com.aldhafara.lightPollutionService.exception.TiffFileReadException;
 import com.aldhafara.lightPollutionService.utils.FileStreamProvider;
-import com.aldhafara.lightPollutionService.utils.TiffFileStreamProvider;
 import org.apache.commons.imaging.Imaging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -11,8 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 public class ViirsTiffFileLoader implements RasterImageProvider {
@@ -33,25 +34,32 @@ public class ViirsTiffFileLoader implements RasterImageProvider {
     }
 
     @Override
-    public void getOrLoadReference(String key) {
-
-        geoRefCacheStream.computeIfAbsent(key, k -> {
-            try {
-                InputStream inputStream;
-                if (key.contains("average")) {
-                    inputStream = fileStreamProvider.getFileInputStream(viirsAverageDataPath);
-                } else if (key.contains("mask")) {
-                    inputStream = fileStreamProvider.getFileInputStream(viirsMaskDataPath);
-                } else {
-                    return null;
+    public void getOrLoadReference(String key) throws TiffFileReadException {
+        try {
+            geoRefCacheStream.computeIfAbsent(key, k -> {
+                try {
+                    InputStream inputStream;
+                    if (k.contains("average")) {
+                        inputStream = fileStreamProvider.getFileInputStream(viirsAverageDataPath);
+                    } else if (k.contains("mask")) {
+                        inputStream = fileStreamProvider.getFileInputStream(viirsMaskDataPath);
+                    } else {
+                        log.error("Error while reading TIFF file, unknown key='{}'", k);
+                        return null;
+                    }
+                    return Imaging.getBufferedImage(inputStream);
+                } catch (ResourceNotFoundException | IOException e) {
+                    throw new RuntimeException(e);
                 }
-                return Imaging.getBufferedImage(inputStream);
-
-            } catch (IOException e) {
-                log.error("Error while reading TIFF file", e);
-                throw new RuntimeException(e);
+            });
+        } catch (RuntimeException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof ResourceNotFoundException || cause instanceof TiffFileReadException) {
+                throw new TiffFileReadException("Failed to read TIFF file", cause);
+            } else {
+                throw e;
             }
-        });
+        }
     }
 
     @Override
