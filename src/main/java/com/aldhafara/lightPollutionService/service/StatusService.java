@@ -26,7 +26,7 @@ public class StatusService {
         this.ratelimitDurationSeconds = ratelimitDurationSeconds;
     }
 
-    public long getUptime() {
+    public long getUptimeMillis() {
         return Duration.between(startTime, Instant.now()).toMillis();
     }
 

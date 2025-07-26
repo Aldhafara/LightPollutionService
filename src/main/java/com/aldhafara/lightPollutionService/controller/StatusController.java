@@ -34,22 +34,31 @@ public class StatusController {
     @GetMapping("/status")
     public StatusResponse getStatus() {
 
-        long uptime = statusService.getUptime();
+        long uptimeMillis = statusService.getUptimeMillis();
         return new StatusResponse(
                 "UP",
-                uptime,
-                getUptimePretty(uptime),
+                uptimeMillis,
+                getUptimePretty(uptimeMillis),
                 statusService.getTimestamp(),
                 statusService.getRatelimitRequests(),
                 statusService.getRatelimitDurationSeconds()
         );
     }
 
-    private String getUptimePretty(long uptime) {
-        int seconds = (int) (uptime / 1000);
-        int hours = seconds / 3600;
-        int minutes = (seconds % 3600) / 60;
-        int secs = seconds % 60;
-        return hours + "h " + minutes + "m " + secs + "s";
+    private String getUptimePretty(long uptimeMillis) {
+        int totalSeconds = (int) (uptimeMillis / 1000);
+        int days = totalSeconds / 86400;
+        int hours = (totalSeconds % 86400) / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        int seconds = totalSeconds % 60;
+
+        StringBuilder sb = new StringBuilder();
+        if (days > 0) {
+            sb.append(days).append("d ");
+        }
+        sb.append(hours).append("h ")
+                .append(minutes).append("m ")
+                .append(seconds).append("s");
+        return sb.toString();
     }
 }

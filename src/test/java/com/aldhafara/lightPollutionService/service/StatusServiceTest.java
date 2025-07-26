@@ -18,10 +18,10 @@ class StatusServiceTest {
     @Test
     void getUptime() throws InterruptedException {
         Thread.sleep(1);
-        long firstUptime = service.getUptime();
+        long firstUptime = service.getUptimeMillis();
         assertTrue(firstUptime > 0, "Uptime should be greater that 0");
         Thread.sleep(5);
-        long secondUptime = service.getUptime();
+        long secondUptime = service.getUptimeMillis();
         assertTrue(secondUptime > firstUptime, "Uptime should increase over time");
     }
 
