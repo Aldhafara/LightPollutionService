@@ -30,17 +30,15 @@ class ViirsTiffFileLoaderTest {
     @BeforeEach
     void setUp() throws URISyntaxException {
         URL averageResourceUrl = getClass().getClassLoader().getResource("tiff/mock_average.tiff");
-        URL maskResourceUrl = getClass().getClassLoader().getResource("tiff/mock_mask.tiff");
 
         loader = new ViirsTiffFileLoader(
                 averageResourceUrl.toURI().toString(),
-                maskResourceUrl.toURI().toString(),
                 fileStreamProvider
         );
     }
 
     @Test
-    void testGetOrLoadReference_CachesImage_ForAverageKey() throws Exception {
+    void testGetOrLoadReference_CachesImage_ForAverageKey() {
         try (MockedStatic<Imaging> imaging = mockStatic(Imaging.class)) {
             BufferedImage mockedImage = mock(BufferedImage.class);
             imaging.when(() -> Imaging.getBufferedImage(any(InputStream.class))).thenReturn(mockedImage);
@@ -56,22 +54,6 @@ class ViirsTiffFileLoaderTest {
     }
 
     @Test
-    void testGetOrLoadReference_CachesImage_ForMaskKey() throws Exception {
-        try (MockedStatic<Imaging> imaging = mockStatic(Imaging.class)) {
-            BufferedImage mockedImage = mock(BufferedImage.class);
-            imaging.when(() -> Imaging.getBufferedImage(any(InputStream.class))).thenReturn(mockedImage);
-
-            when(fileStreamProvider.getFileInputStream(anyString())).thenReturn(new ByteArrayInputStream(new byte[]{1, 2, 3}));
-
-            loader.getOrLoadReference("2023/mask");
-            BufferedImage result = loader.getImage("2023/mask");
-
-            assertNotNull(result);
-            imaging.verify(() -> Imaging.getBufferedImage(any(InputStream.class)), times(1));
-        }
-    }
-
-    @Test
     void testGetOrLoadReference_IgnoresUnknownKey() {
         loader.getOrLoadReference("2023/unknown");
         assertNull(loader.getImage("2023/unknown"));
@@ -80,7 +62,7 @@ class ViirsTiffFileLoaderTest {
     @Test
     void testGetOrLoadReference_HandlesIOException() {
         ViirsTiffFileLoader failingLoader = new ViirsTiffFileLoader(
-                "file:///nonexistent/average.tiff", "file:///nonexistent/mask.tiff", fileStreamProvider
+                "file:///nonexistent/average.tiff", fileStreamProvider
         );
         assertThrows(RuntimeException.class, () -> {
             failingLoader.getOrLoadReference("2023/average");

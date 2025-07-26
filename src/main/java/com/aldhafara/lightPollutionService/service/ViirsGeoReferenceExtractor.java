@@ -33,13 +33,10 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
     private final Map<String, ViirsGeoReference> geoRefCache = new ConcurrentHashMap<>();
 
     private final String viirsAverageDataPath;
-    private final String viirsMaskDataPath;
     private final FileStreamProvider fileStreamProvider;
 
-    public ViirsGeoReferenceExtractor(@Value("${viirs.average.url}") String viirsAverageDataPath,
-                                      @Value("${viirs.mask.url}") String viirsMaskDataPath, FileStreamProvider fileStreamProvider) {
+    public ViirsGeoReferenceExtractor(@Value("${viirs.average.url}") String viirsAverageDataPath, FileStreamProvider fileStreamProvider) {
         this.viirsAverageDataPath = viirsAverageDataPath;
-        this.viirsMaskDataPath = viirsMaskDataPath;
         this.fileStreamProvider = fileStreamProvider;
     }
 
@@ -51,8 +48,6 @@ public class ViirsGeoReferenceExtractor implements GeoReferenceProvider {
                     InputStream inputStream;
                     if (k.contains("average")) {
                         inputStream = fileStreamProvider.getFileInputStream(viirsAverageDataPath);
-                    } else if (k.contains("mask")) {
-                        inputStream = fileStreamProvider.getFileInputStream(viirsMaskDataPath);
                     } else {
                         log.error("Error while reading TIFF file, unknown key='{}'", k);
                         return null;

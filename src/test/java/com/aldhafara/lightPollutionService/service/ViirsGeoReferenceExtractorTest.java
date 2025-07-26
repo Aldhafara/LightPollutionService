@@ -35,11 +35,9 @@ class ViirsGeoReferenceExtractorTest {
     @BeforeEach
     void setUp() throws URISyntaxException {
         URL averageResourceUrl = getClass().getClassLoader().getResource("tiff/mock_average.tiff");
-        URL maskResourceUrl = getClass().getClassLoader().getResource("tiff/mock_mask.tiff");
 
         extractor = new ViirsGeoReferenceExtractor(
                 averageResourceUrl.toURI().toString(),
-                maskResourceUrl.toURI().toString(),
                 fileStreamProvider
         );
     }

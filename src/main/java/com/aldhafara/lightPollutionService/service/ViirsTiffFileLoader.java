@@ -21,15 +21,12 @@ public class ViirsTiffFileLoader implements RasterImageProvider {
     private static final Logger log = LoggerFactory.getLogger(ViirsTiffFileLoader.class);
 
     private final String viirsAverageDataPath;
-    private final String viirsMaskDataPath;
     private final FileStreamProvider fileStreamProvider;
 
     private final Map<String, BufferedImage> geoRefCacheStream = new ConcurrentHashMap<>();
 
-    public ViirsTiffFileLoader(@Value("${viirs.average.url}") String viirsAverageDataPath,
-                               @Value("${viirs.mask.url}") String viirsMaskDataPath, FileStreamProvider fileStreamProvider) {
+    public ViirsTiffFileLoader(@Value("${viirs.average.url}") String viirsAverageDataPath, FileStreamProvider fileStreamProvider) {
         this.viirsAverageDataPath = viirsAverageDataPath;
-        this.viirsMaskDataPath = viirsMaskDataPath;
         this.fileStreamProvider = fileStreamProvider;
     }
 
@@ -41,8 +38,6 @@ public class ViirsTiffFileLoader implements RasterImageProvider {
                     InputStream inputStream;
                     if (k.contains("average")) {
                         inputStream = fileStreamProvider.getFileInputStream(viirsAverageDataPath);
-                    } else if (k.contains("mask")) {
-                        inputStream = fileStreamProvider.getFileInputStream(viirsMaskDataPath);
                     } else {
                         log.error("Error while reading TIFF file, unknown key='{}'", k);
                         return null;
