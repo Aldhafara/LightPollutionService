@@ -146,7 +146,9 @@ GET /darkness?latitude=50.06143&longitude=19.93658
   "status": "UP",
   "uptime": 5025112,
   "uptimePretty": "1h 23m 45s",
-  "timestamp": "2025-07-14T18:52:00Z"
+  "timestamp": "2025-07-14T18:52:00Z",
+  "ratelimitRequests":50,
+  "ratelimitDurationSeconds":60
 }
 ```
 
@@ -156,6 +158,8 @@ GET /darkness?latitude=50.06143&longitude=19.93658
 - `uptime` - server uptime in ms
 - `uptimePretty` - server uptime in easy to read form
 - `timestamp` - timestamp of request
+- `ratelimitRequests` - maximum number of queries allowed in a given time window
+- `ratelimitDurationSeconds` - Length of the time window (in seconds) for which the query limit is assumed
 
 ### Example `/darkness` Response
 

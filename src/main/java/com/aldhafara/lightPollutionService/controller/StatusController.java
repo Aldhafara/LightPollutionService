@@ -39,7 +39,9 @@ public class StatusController {
                 "UP",
                 uptime,
                 getUptimePretty(uptime),
-                statusService.getTimestamp()
+                statusService.getTimestamp(),
+                statusService.getRatelimitRequests(),
+                statusService.getRatelimitDurationSeconds()
         );
     }
 

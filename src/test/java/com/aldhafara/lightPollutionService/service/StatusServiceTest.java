@@ -1,5 +1,6 @@
 package com.aldhafara.lightPollutionService.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -7,7 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StatusServiceTest {
 
-    private final StatusService service = new StatusService();
+    private StatusService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new StatusService(2, 60);
+    }
 
     @Test
     void getUptime() throws InterruptedException {
